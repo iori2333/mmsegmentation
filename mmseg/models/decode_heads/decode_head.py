@@ -190,7 +190,6 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         img_metas,
         gt_semantic_seg,
         train_cfg,
-        **kwargs
     ):
         """Forward function for training.
         Args:
@@ -207,8 +206,6 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-        print(inputs)
-        print(kwargs)
         seg_logits = self.forward(inputs)
         losses = self.losses(seg_logits, gt_semantic_seg)
         return losses

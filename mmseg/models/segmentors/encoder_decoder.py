@@ -79,13 +79,13 @@ class EncoderDecoder(BaseSegmentor):
             align_corners=self.align_corners)
         return out
 
-    def _decode_head_forward_train(self, x, img_metas, gt_semantic_seg):
+    def _decode_head_forward_train(self, x, img_metas, gt_semantic_seg, **kwargs):
         """Run forward function and calculate loss for decode head in
         training."""
         losses = dict()
         loss_decode = self.decode_head.forward_train(x, img_metas,
                                                      gt_semantic_seg,
-                                                     self.train_cfg)
+                                                     self.train_cfg, **kwargs)
 
         losses.update(add_prefix(loss_decode, 'decode'))
         return losses
@@ -96,7 +96,7 @@ class EncoderDecoder(BaseSegmentor):
         seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
         return seg_logits
 
-    def _auxiliary_head_forward_train(self, x, img_metas, gt_semantic_seg):
+    def _auxiliary_head_forward_train(self, x, img_metas, gt_semantic_seg, **kwargs):
         """Run forward function and calculate loss for auxiliary head in
         training."""
         losses = dict()
@@ -113,13 +113,13 @@ class EncoderDecoder(BaseSegmentor):
 
         return losses
 
-    def forward_dummy(self, img):
+    def forward_dummy(self, img, **kwargs):
         """Dummy forward function."""
         seg_logit = self.encode_decode(img, None)
 
         return seg_logit
 
-    def forward_train(self, img, img_metas, gt_semantic_seg):
+    def forward_train(self, img, img_metas, gt_semantic_seg, **kwargs):
         """Forward function for training.
 
         Args:
@@ -141,12 +141,12 @@ class EncoderDecoder(BaseSegmentor):
         losses = dict()
 
         loss_decode = self._decode_head_forward_train(x, img_metas,
-                                                      gt_semantic_seg)
+                                                      gt_semantic_seg, **kwargs)
         losses.update(loss_decode)
 
         if self.with_auxiliary_head:
             loss_aux = self._auxiliary_head_forward_train(
-                x, img_metas, gt_semantic_seg)
+                x, img_metas, gt_semantic_seg, **kwargs)
             losses.update(loss_aux)
 
         return losses

@@ -8,7 +8,7 @@ from .transforms import (CLAHE, AdjustGamma, Normalize, Pad,
                          PhotoMetricDistortion, RandomCrop, RandomCutOut,
                          RandomFlip, RandomMosaic, RandomRotate, Rerange,
                          Resize, RGB2Gray, SegRescale)
-from .hsi import LoadHSIFromFile, ResizeHSI, PadHSI, PhotoMetricDistortionHSI
+from .hsi import LoadHSIFromFile, ResizeHSI, PadHSI, PhotoMetricDistortionHSI, DefaultFormatBundleHSI
 
 __all__ = [
     'Compose', 'to_tensor', 'ToTensor', 'ImageToTensor', 'ToDataContainer',
@@ -17,5 +17,5 @@ __all__ = [
     'Normalize', 'SegRescale', 'PhotoMetricDistortion', 'RandomRotate',
     'AdjustGamma', 'CLAHE', 'Rerange', 'RGB2Gray', 'RandomCutOut',
     'RandomMosaic', 'LoadHSIFromFile', 'ResizeHSI', 'PadHSI',
-    'PhotoMetricDistortionHSI'
+    'PhotoMetricDistortionHSI', 'DefaultFormatBundleHSI'
 ]

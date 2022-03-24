@@ -5,19 +5,15 @@ img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadHSIFromFile'),
     dict(type='LoadAnnotations'),
     dict(type='ResizeHSI', ratio=0.5),
     dict(type='PhotoMetricDistortion'),
-    dict(type='PhotoMetricDistortionHSI'),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size=pad_size, pad_val=0, seg_pad_val=255),
-    dict(type='PadHSI', size=pad_size, pad_val=0),
     dict(type='DefaultFormatBundle'),
-    dict(type='DefaultFormatBundleHSI'),
     dict(
         type='Collect',
-        keys=['img', 'hsi', 'gt_semantic_seg'],
+        keys=['img', 'gt_semantic_seg'],
         meta_keys=[
             'filename',
             'ori_filename',
@@ -29,22 +25,17 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadHSIFromFile'),
-    dict(type='ResizeHSI', ratio=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size=pad_size, pad_val=0, seg_pad_val=255),
-    dict(type='PadHSI', size=pad_size, pad_val=0),
-    dict(type='ImageToTensor', keys=['img', 'hsi']),
     dict(
-        type='Collect',
-        keys=['img', 'hsi'],
-        meta_keys=[
-            'filename',
-            'ori_filename',
-            'ori_shape',
-            'img_shape',
-            'pad_shape',
-            'scale_factor',
+        type='MultiScaleFlipAug',
+        img_scale=(1422, 1889),
+        # img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
+        flip=False,
+        transforms=[
+            dict(type='ResizeHSI', ratio=0.5),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='Pad', size=pad_size, pad_val=0, seg_pad_val=255),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img']),
         ])
 ]
 data = dict(

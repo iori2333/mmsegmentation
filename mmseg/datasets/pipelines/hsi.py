@@ -1,11 +1,12 @@
 import os.path as osp
 import pickle
 import random
-
+from mmcv.parallel import DataContainer as DC
 import mmcv
 import numpy as np
 
 from ..builder import PIPELINES
+from .formating import to_tensor
 from .transforms import PhotoMetricDistortion
 
 
@@ -102,10 +103,12 @@ class ResizeHSI():
     def __call__(self, results):
         self._resize_img(results)
         self._resize_seg(results)
-        self._resize_hsi(results)
-        h1, w1, _ = results['img'].shape
-        h2, w2, _ = results['hsi'].shape
-        assert h1 == h2 and w1 == w2, f'img has shape ({h1}, {w1}), hsi has shape ({h2}, {w2})'
+        if 'hsi' in results:
+            self._resize_hsi(results)
+        # self._resize_hsi(results)
+        # h1, w1, _ = results['img'].shape
+        # h2, w2, _ = results['hsi'].shape
+        # assert h1 == h2 and w1 == w2, f'img has shape ({h1}, {w1}), hsi has shape ({h2}, {w2})'
         return results
 
 
@@ -167,3 +170,23 @@ class PhotoMetricDistortionHSI(PhotoMetricDistortion):
 
         results['hsi'] = hsi
         return results
+
+@PIPELINES.register_module()
+class DefaultFormatBundleHSI():
+    def __call__(self, results):
+        """Call function to transform and format common fields in results.
+
+        Args:
+            results (dict): Result dict contains the data to convert.
+
+        Returns:
+            dict: The result dict contains the data that is formatted with
+                default bundle.
+        """
+        hsi = results['hsi']
+        hsi = np.ascontiguousarray(hsi.transpose(2, 0, 1))
+        results['hsi'] = DC(to_tensor(hsi), stack=True)
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__

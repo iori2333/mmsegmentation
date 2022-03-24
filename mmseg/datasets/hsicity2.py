@@ -30,9 +30,11 @@ class HSICity2Dataset(CustomDataset):
     def __init__(self,
                  img_suffix='.jpg',
                  seg_map_suffix='_gray.png',
+                 hsi_suffix='.pkl',
                  **kwargs):
         super(HSICity2Dataset, self).__init__(
             img_suffix=img_suffix, seg_map_suffix=seg_map_suffix, **kwargs)
+        self.hsi_suffix = hsi_suffix
 
     def results2img(self, results, imgfile_prefix, to_label_id, indices=None):
         """Write the segmentation results to images.
@@ -206,7 +208,7 @@ class HSICity2Dataset(CustomDataset):
             img_info = {
                 'name': name,
                 'filename': f'rgb{name}{img_suffix}',
-                'hsi': f'{name}.pkl',
+                'hsi': img,
                 'ann': dict(seg_map=f'rgb{name}{seg_map_suffix}')
             }
             img_infos.append(img_info)

@@ -190,3 +190,11 @@ class DefaultFormatBundleHSI():
 
     def __repr__(self):
         return self.__class__.__name__
+
+
+@PIPELINES.register_module()
+class ReplaceRGB():
+    def __call__(self, result):
+        result['img'] = result['hsi']
+        del result['hsi']
+        return result

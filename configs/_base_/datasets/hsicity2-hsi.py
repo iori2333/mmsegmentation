@@ -15,9 +15,10 @@ train_pipeline = [
     dict(type='PadHSI', size=pad_size, pad_val=0),
     dict(type='DefaultFormatBundle'),
     dict(type='DefaultFormatBundleHSI'),
+    dict(type='ReplaceRGB'),
     dict(
         type='Collect',
-        keys=['img', 'hsi', 'gt_semantic_seg'],
+        keys=['img', 'gt_semantic_seg'],
         meta_keys=[
             'filename',
             'ori_filename',
@@ -41,7 +42,8 @@ test_pipeline = [
             dict(type='Pad', size=pad_size, pad_val=0, seg_pad_val=255),
             dict(type='PadHSI', size=pad_size, pad_val=0),
             dict(type='ImageToTensor', keys=['img', 'hsi']),
-            dict(type='Collect', keys=['img', 'hsi']),
+            dict(type='ReplaceRGB'),
+            dict(type='Collect', keys=['img']),
         ])
 ]
 data = dict(

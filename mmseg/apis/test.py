@@ -98,8 +98,6 @@ def single_gpu_test(
             if eval_hsi:
                 rgb_img = img_metas[0]['filename']
                 img_tensor = mmcv.imread(rgb_img)
-                img_tensor = mmcv.imresize(img_tensor,
-                                           img_metas[0]['img_shape'])
                 imgs = [img_tensor]
             else:
                 img_tensor = data['img'][0]
@@ -107,8 +105,9 @@ def single_gpu_test(
             assert len(imgs) == len(img_metas)
 
             for img, img_meta in zip(imgs, img_metas):
-                h, w, _ = img_meta['img_shape']
-                img_show = img[:h, :w, :]
+                if not eval_hsi:
+                    h, w, _ = img_meta['img_shape']
+                    img_show = img[:h, :w, :]
 
                 ori_h, ori_w = img_meta['ori_shape'][:-1]
                 img_show = mmcv.imresize(img_show, (ori_w, ori_h))

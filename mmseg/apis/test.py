@@ -108,6 +108,8 @@ def single_gpu_test(
                 if not eval_hsi:
                     h, w, _ = img_meta['img_shape']
                     img_show = img[:h, :w, :]
+                else:
+                    img_show = img
 
                 ori_h, ori_w = img_meta['ori_shape'][:-1]
                 img_show = mmcv.imresize(img_show, (ori_w, ori_h))

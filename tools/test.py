@@ -99,6 +99,7 @@ def parse_args():
         default=0.5,
         help='Opacity of painted segmentation map. In (0, 1] range.')
     parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument('--eval_hsi', type=bool, default=False)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -263,7 +264,8 @@ def main():
             args.opacity,
             pre_eval=args.eval is not None and not eval_on_format_results,
             format_only=args.format_only or eval_on_format_results,
-            format_args=eval_kwargs)
+            format_args=eval_kwargs,
+            eval_hsi=args.eval_hsi)
     else:
         model = MMDistributedDataParallel(
             model.cuda(),

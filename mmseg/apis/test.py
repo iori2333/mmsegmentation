@@ -31,15 +31,18 @@ def np2tmp(array, temp_file_name=None, tmpdir=None):
     return temp_file_name
 
 
-def single_gpu_test(model,
-                    data_loader,
-                    show=False,
-                    out_dir=None,
-                    efficient_test=False,
-                    opacity=0.5,
-                    pre_eval=False,
-                    format_only=False,
-                    format_args={}):
+def single_gpu_test(
+    model,
+    data_loader,
+    show=False,
+    out_dir=None,
+    efficient_test=False,
+    opacity=0.5,
+    pre_eval=False,
+    format_only=False,
+    format_args={},
+    eval_hsi=True,
+):
     """Test with single GPU by progressive mode.
 
     Args:
@@ -91,9 +94,16 @@ def single_gpu_test(model,
             result = model(return_loss=False, **data)
 
         if show or out_dir:
-            img_tensor = data['img'][0]
             img_metas = data['img_metas'][0].data[0]
-            imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
+            if eval_hsi:
+                rgb_img = img_metas[0]['filename']
+                img_tensor = mmcv.imread(rgb_img)
+                img_tensor = mmcv.imresize(img_tensor,
+                                           img_metas[0]['img_shape'])
+                imgs = [img_tensor]
+            else:
+                img_tensor = data['img'][0]
+                imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
             assert len(imgs) == len(img_metas)
 
             for img, img_meta in zip(imgs, img_metas):

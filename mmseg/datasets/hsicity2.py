@@ -36,6 +36,18 @@ class HSICity2Dataset(CustomDataset):
             img_suffix=img_suffix, seg_map_suffix=seg_map_suffix, **kwargs)
         self.hsi_suffix = hsi_suffix
 
+    @staticmethod
+    def _convert_to_label_id(result):
+        """Convert trainId to id for cityscapes."""
+        if isinstance(result, str):
+            result = np.load(result)
+        import cityscapesscripts.helpers.labels as CSLabels
+        result_copy = result.copy()
+        for trainId, label in CSLabels.trainId2label.items():
+            result_copy[result == trainId] = label.id
+
+        return result_copy
+
     def results2img(self, results, imgfile_prefix, to_label_id, indices=None):
         """Write the segmentation results to images.
 

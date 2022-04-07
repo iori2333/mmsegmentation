@@ -14,6 +14,8 @@ model = dict(
     decode_head=dict(
         type='FuseNetHead',
         num_classes=19,
-    ))
+    ),
+    train_cfg=dict(),
+    test_cfg=dict(mode='whole'))
 
 data = dict(samples_per_gpu=1, workers_per_gpu=1)

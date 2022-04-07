@@ -22,7 +22,8 @@ model = dict(
         in_index=[0, 1, 2, 3],
         rgb_ch=rgb_ch,
         inf_ch=inf_ch,
-    ))
-
+    ),
+    train_cfg=dict(),
+    test_cfg=dict(mode='whole'))
 
 data = dict(samples_per_gpu=1, workers_per_gpu=1)

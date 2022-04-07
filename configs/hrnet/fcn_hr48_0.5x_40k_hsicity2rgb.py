@@ -1,11 +1,8 @@
-_base_ = [
-    '../_base_/models/fcn_hr18.py', '../_base_/datasets/hsicity2-rgb.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_40k.py'
-]
-
+_base_ = './fcn_hr18_0.5x_40k_hsicity2rgb.py'
 model = dict(
-    pretrained='work_dirs/fcn_hr48_512x1024_160k_cityscapes/iter_160000.pth',
+    pretrained=None,
     backbone=dict(
+        init_cfg=dict(type='Pretrained', checkpoint='work_dirs/fcn_hr48_512x1024_160k_cityscapes/latest.pth', prefix='backbone.'),
         extra=dict(
             stage2=dict(num_channels=(48, 96)),
             stage3=dict(num_channels=(48, 96, 192)),

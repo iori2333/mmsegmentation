@@ -4,6 +4,7 @@ import random
 from mmcv.parallel import DataContainer as DC
 import mmcv
 import numpy as np
+import torch
 
 from ..builder import PIPELINES
 from .formating import to_tensor
@@ -157,7 +158,7 @@ class PhotoMetricDistortionHSI(PhotoMetricDistortion):
     def convert(self, img, alpha=1, beta=0):
         img = img * alpha + beta / 255.0
         return img
-    
+
     def __call__(self, results):
         hsi = results['hsi']
         hsi = (hsi - hsi.min()) / (hsi.max() - hsi.min())
@@ -171,8 +172,10 @@ class PhotoMetricDistortionHSI(PhotoMetricDistortion):
         results['hsi'] = hsi
         return results
 
+
 @PIPELINES.register_module()
 class DefaultFormatBundleHSI():
+
     def __call__(self, results):
         """Call function to transform and format common fields in results.
 
@@ -194,7 +197,30 @@ class DefaultFormatBundleHSI():
 
 @PIPELINES.register_module()
 class ReplaceRGB():
+
     def __call__(self, result):
         result['img'] = result['hsi']
         del result['hsi']
+        return result
+
+
+@PIPELINES.register_module()
+class HSIPCA():
+
+    @staticmethod
+    def _pca(hsi: np.ndarray, n_components=32):
+        h, w, c = hsi.shape
+        hsi = hsi - np.expand_dims(hsi.mean(axis=0), axis=0)
+        hsi = hsi.reshape(h * w, c)
+        u, s, v = np.linalg.svd(hsi, full_matrices=False)
+        r = np.matmul(hsi, v.T[:, :n_components])
+        return r.reshape(h, w, n_components)
+
+    def __init__(self, n_components: int) -> None:
+        self.n_components = n_components
+
+    def __call__(self, result):
+        hsi = result['hsi']
+        hsi = self._pca(hsi, self.n_components)
+        result['hsi'] = hsi
         return result

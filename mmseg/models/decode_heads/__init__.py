@@ -28,6 +28,9 @@ from .setr_up_head import SETRUPHead
 from .stdc_head import STDCHead
 from .uper_head import UPerHead
 from .lawin_head import LawinHead
+from .duohsi_head import DuoHSIHead
+from .rtf_head import RTFNetHead
+from .mf_head import MFNetHead
 
 __all__ = [
     'FCNHead', 'PSPHead', 'ASPPHead', 'PSAHead', 'NLHead', 'GCHead', 'CCHead',
@@ -36,5 +39,5 @@ __all__ = [
     'PointHead', 'APCHead', 'DMHead', 'LRASPPHead', 'SETRUPHead',
     'SETRMLAHead', 'DPTHead', 'SETRMLAHead', 'SegmenterMaskTransformerHead',
     'SegformerHead', 'ISAHead', 'STDCHead', 
-    'LawinHead'
+    'LawinHead', 'DuoHSIHead', 'RTFNetHead', 'MFNetHead'
 ]

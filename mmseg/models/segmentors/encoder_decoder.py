@@ -221,11 +221,7 @@ class EncoderDecoder(BaseSegmentor):
 
     def whole_inference(self, img, img_meta, rescale, **kwargs):
         """Inference with full image."""
-
-        try:
-            seg_logit = self.encode_decode(img, img_meta, **kwargs)
-        except TypeError:
-            seg_logit = self.encode_decode(img, img_meta)
+        seg_logit = self.encode_decode(img, img_meta, **kwargs)
         if rescale:
             # support dynamic shape for onnx
             if torch.onnx.is_in_onnx_export():
@@ -263,7 +259,7 @@ class EncoderDecoder(BaseSegmentor):
         if self.test_cfg.mode == 'slide':
             seg_logit = self.slide_inference(img, img_meta, rescale, **kwargs)
         else:
-            seg_logit = self.whole_inference(img, img_meta, rescale **kwargs)
+            seg_logit = self.whole_inference(img, img_meta, rescale, **kwargs)
         output = F.softmax(seg_logit, dim=1)
         flip = img_meta[0]['flip']
         if flip:
@@ -278,6 +274,8 @@ class EncoderDecoder(BaseSegmentor):
 
     def simple_test(self, img, img_meta, rescale=True, **kwargs):
         """Simple test with single image."""
+        if 'hsi' in kwargs:
+            kwargs['hsi'] = kwargs['hsi'][0]
         seg_logit = self.inference(img, img_meta, rescale, **kwargs)
         seg_pred = seg_logit.argmax(dim=1)
         if torch.onnx.is_in_onnx_export():

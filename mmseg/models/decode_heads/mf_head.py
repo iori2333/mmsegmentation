@@ -60,29 +60,13 @@ class MFNetHead(BaseDecodeHead):
     def forward(self, inputs):
         x, d1, d2, d3 = self._transform_inputs(inputs)
         # decode
-        x = F.interpolate(
-            x,
-            scale_factor=2,
-            mode='nearest',
-            align_corners=self.align_corners)  # unpool4
+        x = F.interpolate(x, scale_factor=2, mode='nearest')  # unpool4
         x = self.decode4(x + d1)
-        x = F.interpolate(
-            x,
-            scale_factor=2,
-            mode='nearest',
-            align_corners=self.align_corners)  # unpool3
+        x = F.interpolate(x, scale_factor=2, mode='nearest')  # unpool3
         x = self.decode3(x + d2)
-        x = F.interpolate(
-            x,
-            scale_factor=2,
-            mode='nearest',
-            align_corners=self.align_corners)  # unpool2
+        x = F.interpolate(x, scale_factor=2, mode='nearest')  # unpool2
         x = self.decode2(x + d3)
-        x = F.interpolate(
-            x,
-            scale_factor=2,
-            mode='nearest',
-            align_corners=self.align_corners)  # unpool1
+        x = F.interpolate(x, scale_factor=2, mode='nearest')  # unpool1
         x = self.decode1(x)
 
         return x

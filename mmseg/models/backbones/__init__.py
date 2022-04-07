@@ -21,11 +21,13 @@ from .vit import VisionTransformer
 from .duohsi import DuoHSI
 from .rtfnet import RTFNet
 from .mfnet import MFNet
+from .fusenet import FuseNet
 
 __all__ = [
     'ResNet', 'ResNetV1c', 'ResNetV1d', 'ResNeXt', 'HRNet', 'FastSCNN',
     'ResNeSt', 'MobileNetV2', 'UNet', 'CGNet', 'MobileNetV3',
     'VisionTransformer', 'SwinTransformer', 'MixVisionTransformer',
     'BiSeNetV1', 'BiSeNetV2', 'ICNet', 'TIMMBackbone', 'ERFNet', 'PCPVT',
-    'SVT', 'STDCNet', 'STDCContextPathNet', 'DuoHSI', 'RTFNet', 'MFNet'
+    'SVT', 'STDCNet', 'STDCContextPathNet', 'DuoHSI', 'RTFNet', 'MFNet',
+    'FuseNet'
 ]

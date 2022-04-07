@@ -73,10 +73,10 @@ class EncoderDecoder(BaseSegmentor):
 
         return x
 
-    def encode_decode(self, img, img_metas):
+    def encode_decode(self, img, img_metas, **kwargs):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
-        x = self.extract_feat(img)
+        x = self.extract_feat(img, **kwargs)
         out = self._decode_head_forward_test(x, img_metas)
         out = resize(
             input=out,
@@ -174,7 +174,7 @@ class EncoderDecoder(BaseSegmentor):
         return losses
 
     # TODO refactor
-    def slide_inference(self, img, img_meta, rescale):
+    def slide_inference(self, img, img_meta, rescale, **kwargs):
         """Inference by sliding-window with overlap.
 
         If h_crop > h_img or w_crop > w_img, the small patch will be used to
@@ -219,10 +219,13 @@ class EncoderDecoder(BaseSegmentor):
                 warning=False)
         return preds
 
-    def whole_inference(self, img, img_meta, rescale):
+    def whole_inference(self, img, img_meta, rescale, **kwargs):
         """Inference with full image."""
 
-        seg_logit = self.encode_decode(img, img_meta)
+        try:
+            seg_logit = self.encode_decode(img, img_meta, **kwargs)
+        except TypeError:
+            seg_logit = self.encode_decode(img, img_meta)
         if rescale:
             # support dynamic shape for onnx
             if torch.onnx.is_in_onnx_export():
@@ -238,7 +241,7 @@ class EncoderDecoder(BaseSegmentor):
 
         return seg_logit
 
-    def inference(self, img, img_meta, rescale):
+    def inference(self, img, img_meta, rescale, **kwargs):
         """Inference with slide/whole style.
 
         Args:
@@ -258,9 +261,9 @@ class EncoderDecoder(BaseSegmentor):
         ori_shape = img_meta[0]['ori_shape']
         assert all(_['ori_shape'] == ori_shape for _ in img_meta)
         if self.test_cfg.mode == 'slide':
-            seg_logit = self.slide_inference(img, img_meta, rescale)
+            seg_logit = self.slide_inference(img, img_meta, rescale, **kwargs)
         else:
-            seg_logit = self.whole_inference(img, img_meta, rescale)
+            seg_logit = self.whole_inference(img, img_meta, rescale **kwargs)
         output = F.softmax(seg_logit, dim=1)
         flip = img_meta[0]['flip']
         if flip:
@@ -273,9 +276,9 @@ class EncoderDecoder(BaseSegmentor):
 
         return output
 
-    def simple_test(self, img, img_meta, rescale=True):
+    def simple_test(self, img, img_meta, rescale=True, **kwargs):
         """Simple test with single image."""
-        seg_logit = self.inference(img, img_meta, rescale)
+        seg_logit = self.inference(img, img_meta, rescale, **kwargs)
         seg_pred = seg_logit.argmax(dim=1)
         if torch.onnx.is_in_onnx_export():
             # our inference backend only support 4D output

@@ -228,6 +228,9 @@ class EncoderDecoder(BaseSegmentor):
                 size = img.shape[2:]
             else:
                 size = img_meta[0]['ori_shape'][:2]
+            if 'img_shape' in img_meta[0]:
+                imgx, imgy = img_meta[0]['img_shape'][:2]
+                seg_logit = seg_logit[:, :, :imgx, :imgy]
             seg_logit = resize(
                 seg_logit,
                 size=size,

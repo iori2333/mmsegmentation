@@ -9,8 +9,8 @@ from .transforms import (CLAHE, AdjustGamma, Normalize, Pad,
                          RandomFlip, RandomMosaic, RandomRotate, Rerange,
                          Resize, RGB2Gray, SegRescale)
 from .hsi import (LoadHSIFromFile, PhotoMetricDistortionHSI,
-                  DefaultFormatBundleHSI, RandomCropHSI, RandomRotateHSI,
-                  HSIPCA, ReplaceHSI, NormalizeHSI)
+                  DefaultFormatBundleMixed, RandomCropMixed, RandomRotateMixed,
+                  PCAHSI, ReplaceHSI, NormalizeHSI, RandomFlipMixed)
 
 __all__ = [
     'Compose', 'to_tensor', 'ToTensor', 'ImageToTensor', 'ToDataContainer',
@@ -19,6 +19,6 @@ __all__ = [
     'Normalize', 'SegRescale', 'PhotoMetricDistortion', 'RandomRotate',
     'AdjustGamma', 'CLAHE', 'Rerange', 'RGB2Gray', 'RandomCutOut',
     'RandomMosaic', 'LoadHSIFromFile', 'PhotoMetricDistortionHSI',
-    'DefaultFormatBundleHSI', 'RandomCropHSI', 'RandomRotateHSI', 'HSIPCA',
-    'ReplaceHSI', 'NormalizeHSI'
+    'DefaultFormatBundleMixed', 'RandomCropMixed', 'RandomRotateMixed', 'PCAHSI',
+    'ReplaceHSI', 'NormalizeHSI', 'RandomFlipMixed'
 ]

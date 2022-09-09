@@ -4,14 +4,11 @@ crop_size = (512, 512)
 train_pipeline = [
     dict(type='LoadHSIFromFile'),
     dict(type='LoadAnnotations'),
-    # dict(type='ReplaceHSI'),
-    # dict(type='Resize', img_scale=(2048, 1024), ratio_range=(0.5, 2.0)),
     dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
     dict(type='NormalizeHSI'),
-    dict(type='RandomFlip', prob=0.5),
-    # dict(type='PhotoMetricDistortion'),
-    dict(type='Pad', size=crop_size, pad_val=0, seg_pad_val=255),
-    dict(type='DefaultFormatBundle'),
+    dict(type='RandomFlipMixed', prob=0.5),
+    dict(type='PhotoMetricDistortionHSI'),
+    dict(type='DefaultFormatBundleMixed'),
     dict(type='Collect', keys=['img', 'gt_semantic_seg']),
 ]
 test_pipeline = [
@@ -23,8 +20,8 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-            # dict(type='Normalize', **img_norm_cfg),
+            dict(type='RandomFlipMixed'),
+            dict(type='NormalizeHSI'),
             dict(type='ImageToTensor', keys=['img']),
             dict(type='Collect', keys=['img']),
         ])

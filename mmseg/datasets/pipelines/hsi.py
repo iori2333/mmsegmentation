@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from ..builder import PIPELINES
-from .formating import to_tensor
+from .formating import to_tensor, DefaultFormatBundle
 from .transforms import PhotoMetricDistortion, RandomCrop, RandomRotate, Resize
 
 
@@ -24,7 +24,7 @@ class LoadHSIFromFile:
         temp = torch.mm(scoredata, coeff)
         data = (temp + average).reshape((height, width, SR))
 
-        return data.numpy()
+        return data
 
     def __init__(self,
                  to_float32=True,
@@ -38,6 +38,11 @@ class LoadHSIFromFile:
         self.imdecode_backend = imdecode_backend
 
     def __call__(self, results):
+        '''
+        HSI images are loaded to torch.Tensor to increase the performance.
+        Any transformation applied to HSI images should be written in torch APIs 
+        instead of numpy APIs.
+        '''
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
 
@@ -78,7 +83,8 @@ class PhotoMetricDistortionHSI(PhotoMetricDistortion):
         return img
 
     def __call__(self, results):
-        hsi = results['hsi_img']
+        key = 'hsi_img' if 'hsi_img' in results else 'img'
+        hsi = results[key]
         hsi = (hsi - hsi.min()) / (hsi.max() - hsi.min())
         # random brightness
         hsi = self.brightness(hsi)
@@ -87,28 +93,8 @@ class PhotoMetricDistortionHSI(PhotoMetricDistortion):
         # mode == 1 --> do random contrast last
         hsi = self.contrast(hsi)
 
-        results['hsi_img'] = hsi
+        results[key] = hsi
         return results
-
-
-@PIPELINES.register_module()
-class DefaultFormatBundleHSI:
-
-    def __call__(self, results):
-        """Call function to transform and format common fields in results.
-        Args:
-            results (dict): Result dict contains the data to convert.
-        Returns:
-            dict: The result dict contains the data that is formatted with
-                default bundle.
-        """
-        hsi = results['hsi_img']
-        hsi = np.ascontiguousarray(hsi.transpose(2, 0, 1))
-        results['hsi_img'] = DC(to_tensor(hsi), stack=True)
-        return results
-
-    def __repr__(self):
-        return self.__class__.__name__
 
 
 @PIPELINES.register_module()
@@ -128,7 +114,7 @@ class ReplaceHSI:
 
 
 @PIPELINES.register_module()
-class RandomCropHSI(RandomCrop):
+class RandomCropMixed(RandomCrop):
 
     def __call__(self, results):
         img = results['img']
@@ -162,7 +148,7 @@ class RandomCropHSI(RandomCrop):
 
 
 @PIPELINES.register_module()
-class RandomRotateHSI(RandomRotate):
+class RandomRotateMixed(RandomRotate):
 
     def __call__(self, results):
         rotate = True if np.random.rand() < self.prob else False
@@ -196,25 +182,27 @@ class RandomRotateHSI(RandomRotate):
 
 
 @PIPELINES.register_module()
-class HSIPCA:
+class PCAHSI:
 
     @staticmethod
-    def _pca(hsi: np.ndarray, n_components=32):
+    def _pca(hsi: torch.Tensor, n_components=32):
         h, w, c = hsi.shape
-        hsi = hsi - np.expand_dims(hsi.mean(axis=0), axis=0)
-        hsi = hsi.reshape(h * w, c)
-        _, _, v = np.linalg.svd(hsi, full_matrices=False)
-        r = np.matmul(hsi, v.T[:, :n_components])
-        return r.reshape(h, w, n_components)
+        hsi = hsi - hsi.mean(0).unsqueeze(0)
+        hsi = hsi.view(h * w, c)
+        _, _, v = torch.linalg.svd(hsi, full_matrices=False)
+        r = torch.mm(hsi, v.T[:, :n_components])
+        return r.view(h, w, n_components)
 
     def __init__(self, n_components: int) -> None:
         self.n_components = n_components
 
     def __call__(self, result):
-        hsi = result['hsi_img']
-        hsi = self._pca(hsi, self.n_components)
-        result['hsi_img'] = hsi
+        key = 'hsi_img' if 'hsi_img' in result else 'img'
+        result[key] = self._pca(result[key], self.n_components)
         return result
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + f'(n_components={self.n_components})'
 
 
 @PIPELINES.register_module()
@@ -226,9 +214,81 @@ class NormalizeHSI:
         mod = torch.sqrt(torch.sum(img**2, axis=2))
         mod = mod.unsqueeze(-1)
         img = img / mod
-        img = (img - img.min()) / (img.max() - img.min())
-        result[key] = img.numpy()
+        result[key] = img
         return result
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + '()'
+
+
+@PIPELINES.register_module()
+class RandomFlipMixed:
+
+    def __init__(self, prob=None, direction='horizontal'):
+        self.prob = prob
+        self.direction = direction
+        if prob is not None:
+            assert prob >= 0 and prob <= 1
+        assert direction in ['horizontal', 'vertical']
+
+    def __call__(self, results):
+        """Call function to flip bounding boxes, masks, semantic segmentation
+        maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Flipped results, 'flip', 'flip_direction' keys are added into
+                result dict.
+        """
+
+        if 'flip' not in results:
+            flip = True if np.random.rand() < self.prob else False
+            results['flip'] = flip
+        if 'flip_direction' not in results:
+            results['flip_direction'] = self.direction
+        axis = 1 if self.direction == 'horizontal' else 0
+        if results['flip']:
+            # flip image
+            results['img'] = torch.flip(results['img'], dims=[axis])
+
+            # flip segs
+            for key in results.get('seg_fields', []):
+                # use copy() to make numpy stride positive
+                results[key] = np.flip(results[key], axis=axis)
+
+            # flip hsi
+            for key in results.get('hsi_img', []):
+                # use copy() to make numpy stride positive
+                results[key] = torch.flip(results[key], dims=[axis])
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(prob={self.prob})'
+
+
+@PIPELINES.register_module()
+class DefaultFormatBundleMixed(DefaultFormatBundle):
+
+    def __call__(self, results):
+        if 'img' in results:
+            img = results['img']
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
+            if isinstance(img, torch.Tensor):
+                img = img.permute(2, 0, 1)
+            else:
+                img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            results['img'] = DC(to_tensor(img), stack=True)
+        if 'hsi_img' in results:
+            img = results['hsi_img']
+            img = img.permute(2, 0, 1)
+            results['img'] = DC(img, stack=True)
+        if 'gt_semantic_seg' in results:
+            # convert to long
+            results['gt_semantic_seg'] = DC(
+                to_tensor(results['gt_semantic_seg'][None,
+                                                     ...].astype(np.int64)),
+                stack=True)
+        return results
